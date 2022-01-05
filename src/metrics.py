@@ -4,14 +4,14 @@ from typing import Tuple
 import torch
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
+
 def compute_metrics(
     y_true: torch.Tensor, 
     y_pred: torch.Tensor
 ) -> Tuple[float, float, float, float, float]:
     
     loss = torch.nn.functional.binary_cross_entropy(y_pred, y_true)
-        
-    y_true, y_pred = y_true.int().numpy(), (y_pred > 0.5).int().numpy()
+    y_true, y_pred = y_true.int().numpy(), (y_pred > 0.8).int().numpy()
     
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")

@@ -71,9 +71,12 @@ class SineEstimator(nn.Module):
         self.len = ts.shape[0]
         self.vars = ts.shape[1]
         self.a = nn.Parameter(
-            torch.tensor([[0.2], [0.3], [0.1]], dtype=torch.float32)
+            torch.ones((3, 1), dtype=torch.float32)
         )
         self.b = nn.Parameter(
+            torch.tensor([[0.2], [0.3], [0.1]], dtype=torch.float32)
+        )
+        self.c = nn.Parameter(
             torch.ones((3, 1), dtype=torch.float32)
         )
         self.x = torch.tensor([
@@ -81,7 +84,7 @@ class SineEstimator(nn.Module):
         ], dtype=torch.float32)
         
     def forward(self) -> torch.Tensor:
-        result = torch.sin(self.a * self.x + self.b)
+        result = self.a + torch.sin(self.b * self.x + self.c)
         return result.swapaxes(-1, -2).squeeze(0)
 
 

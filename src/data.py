@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from sklearn.model_selection import train_test_split
 
+
 class Dataset(torch.utils.data.Dataset):
     def __init__(
         self, 
@@ -21,6 +22,7 @@ class Dataset(torch.utils.data.Dataset):
         x = torch.tensor(self.x[idx], dtype=torch.float32, requires_grad=True)
         y = torch.tensor(self.y[idx], dtype=torch.float32, requires_grad=True)
         return (x, y)
+    
     
 def dataset_split(
     dataset: Dataset,
