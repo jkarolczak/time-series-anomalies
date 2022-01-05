@@ -28,7 +28,7 @@ class SequentialLSTM(nn.Module):
         return x
 
 
-class Encoder(nn.Module):
+class Classifier(nn.Module):
     def __init__(
         self, 
         in_channels: int = 3, 
@@ -62,8 +62,31 @@ class Encoder(nn.Module):
         return x
 
 
+class SineEstimator(nn.Module):
+    def __init__(
+        self,
+        ts: torch.Tensor
+    ):
+        super().__init__()
+        self.len = ts.shape[0]
+        self.vars = ts.shape[1]
+        self.a = nn.Parameter(
+            torch.tensor([[0.2], [0.3], [0.1]], dtype=torch.float32)
+        )
+        self.b = nn.Parameter(
+            torch.ones((3, 1), dtype=torch.float32)
+        )
+        self.x = torch.tensor([
+            [list(range(self.len))] * self.vars
+        ], dtype=torch.float32)
+        
+    def forward(self) -> torch.Tensor:
+        result = torch.sin(self.a * self.x + self.b)
+        return result.swapaxes(-1, -2).squeeze(0)
+
+
 def serialize(
-    model: Encoder,
+    model: nn.Module,
     epoch: int,
     directory: str = "models" 
 ) -> None:
@@ -76,10 +99,11 @@ def serialize(
 
 def deserialize(
     file_name: str,
-    directory: str = "models" 
-) -> Encoder:
+    directory: str = "models" ,
+    model: nn.Module = Classifier
+) -> nn.Module:
     file_path = os.path.join(directory, file_name)
     state_dict = torch.load(file_path)
-    model = Encoder()
+    model = model()
     model.load_state_dict(state_dict)
     return model
