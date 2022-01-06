@@ -8,12 +8,36 @@ import torch.nn as nn
 
 from .model import Classifier, infer, SineEstimator
 
+
 def anomaly_in_range(
     ts: np.ndarray,
     clf: Classifier
 ) -> List:
     clf_pattern = infer(ts, clf)
     ts_reconstructed = reconstruct(ts)
+    result = [[] for _ in range(len(clf_pattern))]
+    result_bisection = bisection(ts, ts_reconstructed, clf, clf_pattern)
+    result_trisection = trisection(ts, ts_reconstructed, clf, clf_pattern)
+    for i, (rb, rt) in enumerate(zip (result_bisection, result_trisection)):
+        if not len(rb) and not len(rt):
+            continue
+        elif not len(rb):
+            result[i] = rt
+        elif not len(rt):
+            result[i] = rb
+        elif (rb[1] - rb[0]) < (rt[1] - rt[0]):
+            result[i] = rb
+        else:
+            result[i] = rt   
+    return result
+
+
+def bisection(
+    ts: np.ndarray,
+    ts_reconstructed: np.ndarray,
+    clf: Classifier,
+    clf_pattern: np.ndarray
+) -> List:
     result = [[] for _ in range(len(clf_pattern))]
     for i in range(len(clf_pattern)):
         if clf_pattern[i]:
@@ -44,6 +68,51 @@ def anomaly_in_range(
     return result
 
 
+def trisection(
+    ts: np.ndarray,
+    ts_reconstructed: np.ndarray,
+    clf: Classifier,
+    clf_pattern: np.ndarray
+) -> List:
+    result = [[] for _ in range(len(clf_pattern))]
+    for i in range(len(clf_pattern)):
+        if clf_pattern[i]:
+            left, right = 0, ts.shape[0]
+            found = False
+            while True:
+                step = int((right - left) / 3)
+                m1 = left + step
+                m2 = left + 2 * step
+                                
+                lhs = ts.copy()
+                lhs[left:m1, :] = ts_reconstructed[left:m1, :]
+                lhs_infer = infer(lhs, clf)[i]
+                if clf_pattern[i] and not lhs_infer:
+                    right = m1
+                    found = True                
+                
+                mhs = ts.copy()
+                mhs[m1:m2, :] = ts_reconstructed[m1:m2, :]
+                mhs_infer = infer(mhs, clf)[i]
+                if clf_pattern[i] and not mhs_infer:
+                    left = m1
+                    right = m2
+                    found = True
+                
+                rhs = ts.copy()
+                rhs[m2:right, :] = ts_reconstructed[m2:right, :]
+                rhs_infer = infer(rhs, clf)[i]
+                if clf_pattern[i] and not rhs_infer:
+                    left = m2
+                    found = True
+                    
+                if found:
+                    result[i] = [left, right]
+                if all([lhs_infer, mhs_infer, rhs_infer]) or (right - left) < 6:                
+                    break
+    return result
+
+
 def anomaly_on_ts(
     ts: np.ndarray,
     clf: Classifier
@@ -63,21 +132,6 @@ def anomaly_on_ts(
                 result[j].extend(idx)
         
     return result
-
-
-def plot_explanation(
-    ts: np.ndarray,
-    labels: np.ndarray,
-    clf: Classifier
-) -> None:
-    on_ts = anomaly_on_ts(ts, clf)
-    in_range = anomaly_in_range(ts, clf)
-    plt.figure(figsize=(16, 9))
-    plt.plot(ts)
-    for a_ts, a_r in zip(on_ts, in_range):
-        if len(a_ts) and len(a_r):
-            plt.plot(range(a_r[0], a_r[1]), ts[a_r[0]:a_r[1], a_ts], color='red', linewidth=3)
-    plt.show() 
 
 
 def reconstruct(ts: np.ndarray, silent: bool = True) -> np.ndarray:
@@ -105,3 +159,18 @@ def reconstruct(ts: np.ndarray, silent: bool = True) -> np.ndarray:
         
     sine.eval()
     return sine().detach().numpy()
+
+
+def plot_explanation(
+    ts: np.ndarray,
+    labels: np.ndarray,
+    clf: Classifier
+) -> None:
+    on_ts = anomaly_on_ts(ts, clf)
+    in_range = anomaly_in_range(ts, clf)
+    plt.figure(figsize=(16, 9))
+    plt.plot(ts)
+    for a_ts, a_r in zip(on_ts, in_range):
+        if len(a_ts) and len(a_r):
+            plt.plot(range(a_r[0], a_r[1]), ts[a_r[0]:a_r[1], a_ts], color='red', linewidth=3)
+    plt.show() 
