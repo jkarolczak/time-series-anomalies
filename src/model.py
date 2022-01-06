@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -86,6 +87,17 @@ class SineEstimator(nn.Module):
     def forward(self) -> torch.Tensor:
         result = self.a + torch.sin(self.b * self.x + self.c)
         return result.swapaxes(-1, -2).squeeze(0)
+
+
+def infer(
+    ts: torch.Tensor,
+    clf: Classifier,
+    device: torch.device = None
+) -> np.ndarray:
+    if device is None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    x = torch.tensor(ts, dtype=torch.float32, device=device).unsqueeze(0)
+    return (clf(x).squeeze(0).detach().cpu().numpy() > 0.5)
 
 
 def serialize(
