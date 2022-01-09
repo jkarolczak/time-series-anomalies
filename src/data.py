@@ -11,6 +11,7 @@ class Dataset(torch.utils.data.Dataset):
         time_series: List[np.ndarray], 
         labels: List[np.ndarray]
     ):
+        super().__init__()
         assert len(time_series) == len(labels)
         self.x = time_series
         self.y = labels

@@ -14,7 +14,7 @@ class SequentialLSTM(nn.Module):
         batch_first: bool = True,
         bidirectional: bool = True
     ):
-        super(SequentialLSTM, self).__init__()
+        super().__init__()
         if bidirectional:
             assert not out_channels % 2
             out_channels = int(out_channels / 2)
