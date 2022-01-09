@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 
-from .model import Classifier, infer, SineEstimator
+from .model import Classifier, SineEstimator, infer
 
 
 def anomaly_in_range(
@@ -114,7 +114,7 @@ def trisection(
 
 
 def anomaly_on_ts(
-    ts: np.ndarray,
+    ts: np.ndarray, 
     clf: Classifier
 ) -> List:
     clf_pattern = infer(ts, clf)
@@ -134,7 +134,10 @@ def anomaly_on_ts(
     return result
 
 
-def reconstruct(ts: np.ndarray, silent: bool = True) -> np.ndarray:
+def reconstruct(
+    ts: np.ndarray, 
+    silent: bool = True
+) -> np.ndarray:
     y = torch.tensor(ts, dtype=torch.float32, requires_grad=True)
 
     sine = SineEstimator(y)
@@ -163,7 +166,6 @@ def reconstruct(ts: np.ndarray, silent: bool = True) -> np.ndarray:
 
 def plot_explanation(
     ts: np.ndarray,
-    labels: np.ndarray,
     clf: Classifier
 ) -> None:
     on_ts = anomaly_on_ts(ts, clf)
