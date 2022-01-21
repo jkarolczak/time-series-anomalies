@@ -1,3 +1,3 @@
 # Anomaly detection in time series
 
-For detailed description of problem, dataset, proposed approach adn results see `report.ipynb`.
+For a detailed description of the problem, dataset, proposed approach and the results see `report.ipynb`.
